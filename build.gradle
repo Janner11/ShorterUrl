@@ -80,7 +80,7 @@ tasks.register('stage') {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'edu.pucmm.Main' 
+                'Main-Class': 'edu.pucmm.Main'
         )
     }
 }
