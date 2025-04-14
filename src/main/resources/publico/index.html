@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acortar URL</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --main-bg: #001326;
+      --card-bg: #001a33;
+      --border-color: #003366;
+      --accent-color: #4d8ebd;
+      --text-color: #c0d6ff;
+      --hover-bg: #00264d;
+    }
+    body {
+      font-family: "Times New Roman", serif;
+      background: var(--main-bg);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #000d1a, #001a33);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 2px 15px rgba(0, 51, 102, 0.2);
+    }
+    .content-container {
+      flex: 1;
+      padding: 2.5rem 0;
+    }
+    .shorten-form, .historial {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 2px solid var(--border-color);
+      box-shadow: 0 4px 25px rgba(0, 51, 102, 0.4);
+      margin-bottom: 2rem;
+      transition: transform 0.3s ease;
+    }
+    .shorten-form:hover, .historial:hover {
+      transform: translateY(-3px);
+    }
+    .form-control {
+      background: var(--main-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus {
+      background: var(--card-bg);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 0.25rem rgba(77, 142, 189, 0.25);
+    }
+    .btn-primary {
+      background: #00264d;
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 51, 102, 0.4);
+    }
+    .url-item {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: var(--main-bg);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-color);
+    }
+    .url-item:hover {
+      background: var(--card-bg);
+      transform: translateX(5px);
+    }
+    #previewResult .card {
+      background: var(--main-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      margin-top: 1rem;
+    }
+    #previewResult .card img {
+      border-bottom: 1px solid var(--border-color);
+    }
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      margin: 1.5rem 0;
+      padding: 15px;
+      background: var(--main-bg);
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+    }
+    #downloadQR {
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+      display: block;
+      background: var(--accent-color);
+      border: none;
+    }
+    #downloadQR:hover {
+      background: #3b6e9a;
+    }
+    footer {
+      background: linear-gradient(90deg, #000d1a, #001a33);
+      border-top: 1px solid var(--border-color);
+      padding: 1.5rem 0;
+      margin-top: auto;
+    }
+    .clicks {
+      font-size: 0.9rem;
+      color: #a0c0ff;
+      min-width: 100px;
+      text-align: right;
+    }
+    @media (max-width: 768px) {
+      .content-container {
+        padding: 1.5rem 0;
+      }
+      .shorten-form, .historial {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .url-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .clicks {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">Acortador de URLs</a>
+    <div id="navbarRight" class="ms-auto">
+      <!-- Botones de Iniciar Sesión y Registrarse se reemplazarán por el menú de usuario -->
+      <a class="btn btn-outline-light me-2" href="/login.html">Iniciar Sesión</a>
+      <a class="btn btn-outline-light" href="/registro.html">Registrarse</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenido Principal -->
+<main class="content-container">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+
+        <!-- Formulario para acortar URL -->
+        <div class="shorten-form">
+          <h2 class="mb-4 text-center fw-bold" style="color: var(--accent-color);">Acortar URL</h2>
+          <form id="shortenForm">
+            <div class="mb-4">
+              <label for="urlOriginal" class="form-label mb-3">URL Original:</label>
+              <input type="url" class="form-control form-control-lg" id="urlOriginal" name="urlOriginal" placeholder="https://ejemplo.com/tu-url-larga" required>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+              <button type="button" class="btn btn-outline-secondary flex-grow-1" onclick="verPreview()">
+                <i class="bi bi-eye me-2"></i>Vista Previa
+              </button>
+              <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="bi bi-link-45deg me-2"></i>Acortar
+              </button>
+            </div>
+            <div id="previewResult" class="mt-3"></div>
+          </form>
+
+          <!-- Resultado del acortamiento -->
+          <div id="resultado" class="mt-4 text-center" style="display: none;">
+            <div class="result-content">
+              <p class="lead mb-3 fw-semibold">Tu URL acortada es:</p>
+              <a id="urlCorta" href="#" target="_blank" class="btn btn-success d-block mb-3"></a>
+              <div id="qrcode"></div>
+              <a id="downloadQR" download="qr_code.png" class="btn btn-info mt-3">
+                <i class="bi bi-download me-2"></i>Descargar QR
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historial de URLs acortadas -->
+        <div class="historial">
+          <h3 class="mb-4 text-center fw-bold" style="color: var(--accent-color);">Historial de URLs</h3>
+          <div id="historial" class="historial-list">
+            <!-- Se listarán las URLs acortadas con su contador -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="mt-auto">
+  <div class="container text-center py-3">
+    <p class="mb-0">&copy; 2025 Acortador de URLs. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script>
+  // Función para ver vista previa usando la API de Microlink
+  function verPreview(){
+    let url = document.getElementById("urlOriginal").value;
+    if(!url) {
+      alert("Ingrese una URL primero.");
+      return;
+    }
+    fetch("/preview?url=" + encodeURIComponent(url))
+      .then(response => response.json())
+      .then(data => {
+        let previewDiv = document.getElementById("previewResult");
+        previewDiv.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">${data.data.title || "Sin título"}</h5>
+              <p class="card-text">${data.data.description || "Sin descripción"}</p>
+              ${data.data.image && data.data.image.url ?
+                `<img src="${data.data.image.url}" class="img-fluid rounded mb-2" alt="Preview">` : ""}
+            </div>
+          </div>
+        `;
+      })
+      .catch(error => {
+        console.error("Error en vista previa:", error);
+        alert("Error obteniendo vista previa.");
+      });
+  }
+
+  // Función para cargar usuario y actualizar el navbar, incluyendo la opción "Resumen"
+  async function cargarUsuario() {
+    try {
+      const response = await fetch('/getUserInfo', { credentials: 'include' });
+      if (response.ok) {
+        const user = await response.json();
+        const navbarRight = document.getElementById("navbarRight");
+        let dropdownHTML = `
+          <div class="dropdown">
+            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              ${user.username}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              ${ user.admin
+                ? `
+                  <li><a class="dropdown-item" href="/dashboard.html"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                  <li><a class="dropdown-item" href="/promover.html"><i class="bi bi-person-plus-fill me-2"></i>Promover Usuarios</a></li>
+                  <li><a class="dropdown-item" href="/AdminSummary.html"><i class="bi bi-file-earmark-text me-2"></i>Resumen</a></li>
+                `
+                : `
+                  <li><a class="dropdown-item" href="/UserDashboard.html"><i class="bi bi-speedometer2 me-2"></i>User Dashboard</a></li>
+                  <li><a class="dropdown-item" href="/Summary.html"><i class="bi bi-file-earmark-text me-2"></i>Resumen</a></li>
+                `
+              }
+              <li><a class="dropdown-item" href="/perfil.html"><i class="bi bi-person-circle me-2"></i>Perfil</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+            </ul>
+          </div>
+        `;
+        navbarRight.innerHTML = dropdownHTML;
+      }
+    } catch (err) {
+      console.error("Error al cargar usuario:", err);
+    }
+  }
+
+  // Funciones para el historial de URLs
+  function obtenerHistorial() {
+    return JSON.parse(sessionStorage.getItem('urlHistorial')) || [];
+  }
+
+  function guardarHistorial(historial) {
+    sessionStorage.setItem('urlHistorial', JSON.stringify(historial));
+  }
+
+  function mostrarHistorial() {
+    let historialDiv = document.getElementById("historial");
+    let urlHistorial = obtenerHistorial();
+    historialDiv.innerHTML = "";
+    if(urlHistorial.length === 0) {
+      historialDiv.innerHTML = "<p class='text-center py-3'>No tienes URLs acortadas.</p>";
+    } else {
+      urlHistorial.forEach((item, index) => {
+        let divItem = document.createElement("div");
+        divItem.classList.add("url-item");
+        divItem.innerHTML = `
+          <a href="${item.url}" target="_blank" onclick="incrementarContador(${index})" class="text-truncate">${item.url}</a>
+          <span class="clicks">Accesos: <span id="clicks-${index}">${item.clicks}</span></span>
+        `;
+        historialDiv.appendChild(divItem);
+      });
+    }
+  }
+
+  function incrementarContador(index) {
+    let urlHistorial = obtenerHistorial();
+    urlHistorial[index].clicks += 1;
+    guardarHistorial(urlHistorial);
+    document.getElementById("clicks-" + index).innerText = urlHistorial[index].clicks;
+  }
+
+  // Manejo del formulario para acortar URL
+  document.getElementById("shortenForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    let urlOriginal = document.getElementById("urlOriginal").value;
+    let formData = new FormData();
+    formData.append("urlOriginal", urlOriginal);
+
+    fetch("/acortar", {
+      method: "POST",
+      body: formData,
+      credentials: 'include'
+    })
+      .then(response => response.text())
+      .then(data => {
+        let prefix = "URL acortada: ";
+        let shortUrl = data.startsWith(prefix) ? data.slice(prefix.length) : data;
+        let resultadoDiv = document.getElementById("resultado");
+        let urlCortaEnlace = document.getElementById("urlCorta");
+
+        urlCortaEnlace.href = shortUrl;
+        urlCortaEnlace.innerText = shortUrl;
+        resultadoDiv.style.display = "block";
+
+        // Generar código QR
+        let qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = "";
+        new QRCode(qrContainer, {
+          text: shortUrl,
+          width: 200,
+          height: 200,
+          colorDark : "#c0d6ff",
+          colorLight : "#001326",
+        });
+
+        setTimeout(() => {
+          let qrCanvas = qrContainer.querySelector("canvas");
+          if (qrCanvas) {
+            document.getElementById("downloadQR").href = qrCanvas.toDataURL("image/png");
+          }
+        }, 500);
+
+        // Actualizar historial
+        let urlHistorial = obtenerHistorial();
+        urlHistorial.push({ url: shortUrl, clicks: 0 });
+        guardarHistorial(urlHistorial);
+        let nuevoIndex = urlHistorial.length - 1;
+
+        urlCortaEnlace.addEventListener("click", function() {
+          incrementarContador(nuevoIndex);
+        });
+
+        mostrarHistorial();
+      })
+      .catch(error => console.error("Error:", error));
+  });
+
+  // Inicialización
+  window.addEventListener("DOMContentLoaded", () => {
+    cargarUsuario();
+    mostrarHistorial();
+  });
+
+  // Registro del Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+        console.log('Service Worker registered with scope:', registration.scope);
+      }, function(err) {
+        console.log('Service Worker registration failed:', err);
+      });
+    });
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dashboard de Estadísticas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --main-bg: #001326;
+            --card-bg: #001a33;
+            --border-color: #003366;
+            --accent-color: #4d8ebd;
+            --text-color: #c0d6ff;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text-color);
+            font-family: "Times New Roman", serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);
+        }
+
+        .card-body {
+            text-align: center;
+        }
+
+        .card h5 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+        }
+
+        .card p {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .chart-container {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        h4 {
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        canvas {
+            background-color: var(--main-bg);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .navbar {
+            background: linear-gradient(90deg, #000d1a, #001a33);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-brand {
+            color: var(--text-color) !important;
+        }
+
+        .table {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .table-dark {
+            --bs-table-bg: var(--card-bg);
+            --bs-table-striped-bg: #001326;
+            --bs-table-hover-bg: #00264d;
+        }
+
+        .btn-danger {
+            background-color: #4d0019;
+            border-color: #660022;
+        }
+
+        .dropdown-menu {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .dropdown-item {
+            color: var(--text-color);
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--main-bg);
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar con dropdown de usuario -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container d-flex justify-content-between">
+        <a class="navbar-brand" href="/index.html">Acortador - Dashboard</a>
+        <ul class="navbar-nav" id="userDropdownContainer">
+            <!-- Se llenará dinámicamente -->
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Panel de Estadísticas Globales</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total de URLs</h5>
+                    <p id="totalUrls">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total de Accesos</h5>
+                    <p id="totalHits">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h4>Accesos por Día</h4>
+        <canvas id="hitsByDayChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h4>Distribución por Navegador</h4>
+        <canvas id="browserChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h4>Distribución por Sistema Operativo</h4>
+        <canvas id="osChart"></canvas>
+    </div>
+
+    <!-- Sección de Administración de Enlaces (solo admin) -->
+    <div class="chart-container">
+        <h4>Administración de Enlaces</h4>
+        <table class="table table-dark table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL Original</th>
+                <th>URL Corta</th>
+                <th>Accesos</th>
+                <th>Acción</th>
+            </tr>
+            </thead>
+            <tbody id="urlsTable">
+            <!-- Se llenarán las filas mediante JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem("jwt") || "";
+
+    // Función para cargar el usuario y actualizar el dropdown en el navbar
+    async function cargarUsuario() {
+        try {
+            const response = await fetch('/getUserInfo', {
+                headers: { 'Authorization': 'Bearer ' + token },
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const user = await response.json();
+                const container = document.getElementById("userDropdownContainer");
+                container.innerHTML = `
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                ${user.username}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                ${user.admin ? '<li><a class="dropdown-item" href="/dashboard.html">Dashboard</a></li>' : ''}
+                <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
+              </ul>
+            </li>
+          `;
+            } else {
+                console.log("No se pudo obtener info de usuario. Status:", response.status);
+            }
+        } catch (err) {
+            console.error("Error al cargar usuario:", err);
+        }
+    }
+
+    // Función para cargar estadísticas globales
+    function cargarEstadisticas() {
+        fetch('/dashboardStats', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("No autorizado o error al obtener estadísticas");
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('totalUrls').textContent = data.totalUrls;
+                document.getElementById('totalHits').textContent = data.totalHits;
+                const dayLabels = Object.keys(data.hitsByDay);
+                const dayValues = Object.values(data.hitsByDay);
+                const browserLabels = Object.keys(data.hitsByBrowser);
+                const browserValues = Object.values(data.hitsByBrowser);
+                const osLabels = Object.keys(data.hitsByOs);
+                const osValues = Object.values(data.hitsByOs);
+
+                const ctxDay = document.getElementById('hitsByDayChart').getContext('2d');
+                new Chart(ctxDay, {
+                    type: 'line',
+                    data: {
+                        labels: dayLabels,
+                        datasets: [{
+                            label: 'Accesos',
+                            data: dayValues,
+                            borderColor: 'rgba(77, 142, 189, 1)',
+                            backgroundColor: 'rgba(77, 142, 189, 0.2)',
+                            fill: true,
+                            tension: 0.2
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { ticks: { color: '#c0d6ff', maxRotation: 45, minRotation: 45 } },
+                            y: { ticks: { color: '#c0d6ff' }, beginAtZero: true }
+                        },
+                        plugins: { legend: { labels: { color: '#c0d6ff' } } }
+                    }
+                });
+
+                const ctxBrowser = document.getElementById('browserChart').getContext('2d');
+                new Chart(ctxBrowser, {
+                    type: 'bar',
+                    data: {
+                        labels: browserLabels,
+                        datasets: [{
+                            label: 'Accesos',
+                            data: browserValues,
+                            backgroundColor: 'rgba(77, 142, 189, 0.5)',
+                            borderColor: 'rgba(77, 142, 189, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { ticks: { color: '#c0d6ff', maxRotation: 45, minRotation: 45 } },
+                            y: { ticks: { color: '#c0d6ff' }, beginAtZero: true }
+                        },
+                        plugins: { legend: { labels: { color: '#c0d6ff' } } },
+                        elements: { bar: { maxBarThickness: 50 } }
+                    }
+                });
+
+                const ctxOs = document.getElementById('osChart').getContext('2d');
+                new Chart(ctxOs, {
+                    type: 'pie',
+                    data: {
+                        labels: osLabels,
+                        datasets: [{
+                            data: osValues,
+                            backgroundColor: [
+                                'rgba(77, 142, 189, 0.5)',
+                                'rgba(100, 158, 210, 0.5)',
+                                'rgba(130, 170, 220, 0.5)',
+                                'rgba(160, 190, 230, 0.5)',
+                                'rgba(190, 210, 240, 0.5)',
+                                'rgba(220, 230, 250, 0.5)',
+                                'rgba(240, 245, 255, 0.5)'
+                            ],
+                            borderColor: '#001326',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#c0d6ff',
+                                    font: {
+                                        family: 'Times New Roman'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => { console.error('Error al obtener estadísticas:', error); });
+    }
+
+    // Función para cargar lista de enlaces
+    function cargarUrls() {
+        fetch('/listUrls', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("No tienes permisos o error en el servidor.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tableBody = document.getElementById('urlsTable');
+                tableBody.innerHTML = "";
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+            <td>${item._id}</td>
+            <td>${item.urlOriginal}</td>
+            <td>${item.urlCorta}</td>
+            <td>${item.accesos}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="eliminarUrl('${item._id}')">Eliminar</button></td>
+          `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => { console.error('Error cargando URLs:', error); });
+    }
+
+    // Función para eliminar un enlace
+    function eliminarUrl(id) {
+        if (confirm("¿Estás seguro de eliminar este enlace?")) {
+            const formData = new FormData();
+            formData.append("id", id);
+            fetch('/eliminar', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) { throw new Error("Error eliminando el enlace."); }
+                    return response.text();
+                })
+                .then(data => { alert(data); cargarUrls(); })
+                .catch(error => {
+                    console.error('Error al eliminar:', error);
+                    alert("Error al eliminar el enlace.");
+                });
+        }
+    }
+
+    // Al cargar la página, se ejecutan las funciones
+    window.addEventListener("DOMContentLoaded", () => {
+        cargarUsuario();
+        cargarEstadisticas();
+        cargarUrls();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

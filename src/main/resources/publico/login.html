@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión y Registro</title>
+    <style>
+        body {
+            font-family: "Times New Roman", serif;
+            background-color: #001f3f; /* Azul marino */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #003366; /* Azul oscuro */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            text-align: center;
+            width: 300px;
+        }
+        h1 {
+            font-size: 22px;
+        }
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: "Times New Roman", serif;
+        }
+        input[type="text"], input[type="password"] {
+            background-color: #f2f2f2;
+            color: black;
+        }
+        input[type="submit"] {
+            background-color: #00509e;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0074cc;
+        }
+        a {
+            color: #00aaff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        a:hover {
+            color: #66c2ff;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        // Funciones para mostrar/ocultar formularios de login y registro
+        function mostrarRegistro() {
+            document.getElementById("registro").classList.remove("hidden");
+            document.getElementById("login").classList.add("hidden");
+        }
+
+        function mostrarLogin() {
+            document.getElementById("login").classList.remove("hidden");
+            document.getElementById("registro").classList.add("hidden");
+        }
+
+        // Función para enviar el registro
+        function registrarUsuario(event) {
+            event.preventDefault();
+
+            const form = document.getElementById("registro-form");
+            const formData = new FormData(form);
+
+            fetch("/registro", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Error en la respuesta del servidor");
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    alert("Registro exitoso. Ahora puedes iniciar sesión.");
+                    mostrarLogin(); // Muestra el formulario de inicio de sesión
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Error al registrarse: " + error.message);
+                });
+        }
+
+        // Función para manejar el login y almacenar el token JWT en localStorage
+        function iniciarSesion(event) {
+            event.preventDefault(); // Prevenir el envío tradicional del formulario
+
+            const form = document.getElementById("login-form");
+            const formData = new FormData(form);
+            const username = formData.get('username');
+            const password = formData.get('password');
+
+            fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({ username, password })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Usuario o contraseña incorrectos");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Guardar el token en localStorage
+                    localStorage.setItem("jwt", data.token);
+                    // Redirigir a la página principal
+                    window.location.href = "/index.html";
+                })
+                .catch(error => {
+                    console.error("Error en el login:", error);
+                    alert("Error en el login: " + error.message);
+                });
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <!-- Sección de inicio de sesión -->
+    <section id="login">
+        <h1>Iniciar sesión</h1>
+        <form id="login-form" onsubmit="iniciarSesion(event)">
+            <input type="text" name="username" placeholder="Nombre de usuario" required><br/>
+            <input type="password" name="password" placeholder="Contraseña" required><br/>
+            <input type="submit" value="Iniciar sesión"/>
+        </form>
+        <p>¿No tienes cuenta? <a onclick="mostrarRegistro()">Regístrate aquí</a></p>
+    </section>
+
+    <!-- Sección de registro -->
+    <section id="registro" class="hidden">
+        <h1>Registrarse</h1>
+        <form id="registro-form" onsubmit="registrarUsuario(event)">
+            <input type="text" name="username" placeholder="Nombre de usuario" required><br/>
+            <input type="text" name="nombre" placeholder="Tu nombre" required><br/>
+            <input type="password" name="password" placeholder="Contraseña" required><br/>
+            <input type="hidden" name="admin" value="false">
+            <input type="hidden" name="activo" value="true">
+            <input type="submit" value="Registrarse">
+        </form>
+        <p>¿Ya tienes cuenta? <a onclick="mostrarLogin()">Inicia sesión aquí</a></p>
+    </section>
+</div>
+</body>
+</html>

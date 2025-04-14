@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Promover Usuario a Administrador</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --main-bg: #001326;
+      --card-bg: #001a33;
+      --border-color: #003366;
+      --accent-color: #4d8ebd;
+      --text-color: #c0d6ff;
+    }
+
+    body {
+      background-color: var(--main-bg);
+      color: var(--text-color);
+      font-family: "Times New Roman", serif;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: linear-gradient(90deg, #000d1a, #001a33);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .navbar-brand {
+      color: var(--text-color) !important;
+    }
+
+    main {
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 2rem !important;
+      margin-top: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);
+    }
+
+    .form-select, .form-select:focus {
+      background-color: var(--main-bg);
+      color: var(--text-color);
+      border: 2px solid var(--border-color);
+    }
+
+    .btn-success {
+      background-color: var(--accent-color);
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+      background-color: #3b6e9a;
+      transform: translateY(-2px);
+    }
+
+    .alert {
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .alert-success {
+      border-color: #004d00;
+    }
+
+    .alert-danger {
+      border-color: #4d0019;
+    }
+
+    .btn-close {
+      filter: invert(1);
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Admin Panel</a>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <h1 class="mb-4" style="color: var(--accent-color);">Promover Usuario a Administrador</h1>
+
+  <div id="alertPlaceholder"></div>
+
+  <form id="promoverForm" class="row g-3">
+    <div class="col-md-6">
+      <label for="username" class="form-label">Selecciona Usuario</label>
+      <select id="username" name="username" class="form-select" required>
+        <option value="">Cargando usuarios...</option>
+      </select>
+    </div>
+    <div class="col-md-6 d-flex align-items-end">
+      <button type="submit" class="btn btn-success w-100">
+        <i class="bi bi-arrow-up-circle"></i> Promover
+      </button>
+    </div>
+  </form>
+</main>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Función para mostrar alertas
+  function showAlert(message, type = 'success') {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+    document.getElementById('alertPlaceholder').append(wrapper);
+  }
+
+  // Carga usuarios no-admin
+  async function cargarUsuarios() {
+    const select = document.getElementById('username');
+    select.innerHTML = '<option value="">Cargando usuarios...</option>';
+    try {
+      const res = await fetch('/listUsuarios');
+      if (!res.ok) throw new Error(await res.text());
+      const usuarios = await res.json();
+
+      if (usuarios.length === 0) {
+        select.innerHTML = '<option value="">No hay usuarios para promover</option>';
+        return;
+      }
+
+      select.innerHTML = '<option value="">-- Selecciona uno --</option>';
+      usuarios.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.username;
+        opt.textContent = `${u.nombre} (${u.username})`;
+        select.appendChild(opt);
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">Error cargando usuarios</option>';
+      showAlert(`Error al cargar usuarios: ${err.message}`, 'danger');
+    }
+  }
+
+  // Maneja el submit del formulario
+  async function promover(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    try {
+      const res = await fetch('/promover', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        showAlert('Usuario promovido correctamente.', 'success');
+        await cargarUsuarios();
+      } else {
+        const errorText = await res.text();
+        showAlert(`Error: ${errorText}`, 'warning');
+      }
+    } catch (err) {
+      showAlert(`Error de red: ${err.message}`, 'danger');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    cargarUsuarios();
+    document.getElementById('promoverForm')
+            .addEventListener('submit', promover);
+  });
+</script>
+</body>
+</html>

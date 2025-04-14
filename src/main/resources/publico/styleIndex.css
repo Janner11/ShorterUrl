@@ -1,0 +1,92 @@
+/* Colores y tipografía inspirados en el login */
+body {
+  font-family: "Times New Roman", serif;
+  background-color: #001f3f; /* Fondo azul marino */
+  color: white;
+  margin: 0;
+}
+
+/* Navbar personalizada */
+.navbar {
+  background-color: #003366; /* Azul oscuro */
+}
+.navbar-brand, .nav-link {
+  color: #ffffff !important;
+  font-weight: bold;
+}
+.nav-link:hover {
+  color: #00aaff !important;
+}
+
+/* Contenedor principal para centrar el contenido */
+.content-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+/* Estilos para el formulario de acortar URL */
+.shorten-form {
+  background-color: #003366; /* Azul oscuro */
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.shorten-form h2 {
+  margin-bottom: 20px;
+  font-size: 26px;
+  color: #00aaff;
+}
+
+.shorten-form .form-label {
+  font-weight: bold;
+}
+
+.shorten-form .form-control {
+  background-color: #f2f2f2;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+/* Botón personalizado */
+.btn-submit {
+  background-color: #00509e;
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+.btn-submit:hover {
+  background-color: #0074cc;
+}
+
+/* Estilos para enlaces de login/registro */
+.login-links {
+  margin-top: 20px;
+}
+.login-links a {
+  color: #00aaff;
+  font-weight: bold;
+  text-decoration: none;
+}
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  background-color: #003366;
+  color: #ffffff;
+  text-align: center;
+  padding: 20px 0;
+}
