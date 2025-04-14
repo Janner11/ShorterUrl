@@ -77,6 +77,13 @@ shadowJar {
 tasks.register('stage') {
     dependsOn shadowJar
 }
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'edu.pucmm.Main' 
+        )
+    }
+}
 
 test {
     useJUnitPlatform()
