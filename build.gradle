@@ -77,13 +77,15 @@ shadowJar {
 tasks.register('stage') {
     dependsOn shadowJar
 }
-jar {
+shadowJar {
+    mergeServiceFiles()  // Esto fusiona archivos de servicios si es necesario
     manifest {
         attributes(
-                'Main-Class': 'edu.pucmm.Main'
+                'Main-Class': 'edu.pucmm.Main'  // Asegúrate de que tu clase principal esté configurada aquí
         )
     }
 }
+
 
 test {
     useJUnitPlatform()
